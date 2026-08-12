@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>...</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: #000;
+    color: #fff;
+
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+.screen {
+    width: 90%;
+    max-width: 500px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+input {
+    width: 240px;
+    padding: 12px;
+
+    margin-top: 18px;
+
+    background: #000;
+    color: #fff;
+
+    border: 1px solid #fff;
+    outline: none;
+
+    text-align: center;
+    font-size: 17px;
+}
+
+button {
+    padding: 11px 24px;
+    margin: 8px 4px;
+
+    background: #fff;
+    color: #000;
+
+    border: none;
+
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.8;
+}
+
+.question {
+    font-size: 22px;
+    margin-bottom: 12px;
+}
+
+.hint {
+    font-size: 14px;
+    line-height: 1.5;
+    opacity: 0.7;
+}
+
+.small {
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    opacity: 0.7;
+}
+
+.emoji {
+    font-size: 46px;
+    margin-bottom: 15px;
+}
+
+.buttons {
+    margin-top: 22px;
+}
+
+.final-button {
+    min-width: 90px;
+}
+
+.result {
+    margin-top: 25px;
+    font-size: 18px;
+    line-height: 1.6;
+}
+
+#hintButton {
+    display: none;
+}
+</style>
+</head>
+
+
+<body>
+
+
+<!-- ========================================= -->
+<!-- ПЕРВЫЙ ЭКРАН -->
+<!-- ========================================= -->
+
+<div id="passwordScreen" class="screen">
+
+    <div>Пароль</div>
+
+    <input
+        id="passwordInput"
+        type="password"
+        autocomplete="off"
+    >
+
+    <br>
+
+    <button onclick="checkMainPassword()">
+        →
+    </button>
+
+    <br>
+
+    <button
+        id="hintButton"
+        onclick="startHint()">
+        Подсказка
+    </button>
+
+</div>
+
+
+<!-- ========================================= -->
+<!-- ТРИ ПОДТВЕРЖДЕНИЯ -->
+<!-- ========================================= -->
+
+<div id="hintScreen" class="screen hidden">
+
+    <div id="hintText">
+        Точно хочешь?
+    </div>
+
+    <button onclick="hintAnswer()">
+        Да
+    </button>
+
+</div>
+
+
+<!-- ========================================= -->
+<!-- ВИКТОРИНА -->
+<!-- ========================================= -->
+
+<div id="quizScreen" class="screen hidden">
+
+    <div
+        id="question"
+        class="question">
+    </div>
+
+    <div
+        id="questionHint"
+        class="hint">
+    </div>
+
+    <input
+        id="answerInput"
+        type="text"
+        autocomplete="off"
+    >
+
+    <br>
+
+    <button onclick="checkAnswer()">
+        →
+    </button>
+
+</div>
+
+
+<!-- ========================================= -->
+<!-- 26 / 16 -->
+<!-- ========================================= -->
+
+<div id="numberScreen" class="screen hidden">
+
+    <div class="question">
+        Яке число тобі подобається?
+    </div>
+
+    <div class="buttons">
+
+        <button onclick="chooseNumber('26')">
+            26
+        </button>
+
+        <button onclick="chooseNumber('16')">
+            16
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================= -->
+<!-- 26 -->
+<!-- ========================================= -->
+
+<div id="successNumberScreen" class="screen hidden">
+
+    <div class="emoji">
+        😊
+    </div>
+
+    <div>
+        День рождения
+    </div>
+
+    <div class="small">
+        Первые два символа — месяц,<br>
+        вторые два — день
+    </div>
+
+    <div style="margin-top: 25px;">
+
+        <div>
+            Пароль
+        </div>
+
+        <input
+            id="birthdayPassword"
+            type="password"
+            autocomplete="off"
+        >
+
+        <br>
+
+        <button onclick="checkBirthdayPassword()">
+            →
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================= -->
+<!-- 16 -->
+<!-- ========================================= -->
+
+<div id="failNumberScreen" class="screen hidden">
+
+    <div class="emoji">
+        😔
+    </div>
+
+    <div>
+        Жаль что так, я думаю тебе не нужна знать пароль
+    </div>
+
+</div>
+
+
+<!-- ========================================= -->
+<!-- ФИНАЛЬНЫЙ ВЫБОР -->
+<!-- ========================================= -->
+
+<div id="finalScreen" class="screen hidden">
+
+    <div
+        id="finalButtons"
+        class="buttons">
+
+        <button
+            class="final-button"
+            onclick="chooseFinal('Настя')">
+            Настя
+        </button>
+
+        <button
+            class="final-button"
+            onclick="chooseFinal('Ми')">
+            Ми
+        </button>
+
+        <button
+            class="final-button"
+            onclick="chooseFinal('Льоша')">
+            Льоша
+        </button>
+
+    </div>
+
+    <div
+        id="finalResult"
+        class="result">
+    </div>
+
+</div>
+
+
+
+
+<script>
+
+
+/* =========================================
+   SUPABASE
+   ========================================= */
+
+const SUPABASE_URL =
+    "https://qwrwlopovbxvgxqdglae.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_O_prUGifjG5bX9DzOmUI4Q_KUVBJh24";
+
+
+/* =========================================
+   УНИКАЛЬНЫЙ ID ЭТОГО БРАУЗЕРА
+   ========================================= */
+
+function getVisitorId() {
+
+    let id =
+        localStorage.getItem("visitor_id");
+
+    if (!id) {
+
+        id = crypto.randomUUID();
+
+        localStorage.setItem(
+            "visitor_id",
+            id
+        );
+    }
+
+    return id;
+}
+
+
+const visitorId = getVisitorId();
+
+
+/* =========================================
+   ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ
+   ========================================= */
+
+function showScreen(id) {
+
+    document
+        .querySelectorAll(".screen")
+        .forEach(screen => {
+
+            screen.classList.add("hidden");
+
+        });
+
+    document
+        .getElementById(id)
+        .classList.remove("hidden");
+}
+
+
+/* =========================================
+   ПОЛУЧИТЬ ДАНІ З SUPABASE
+   ========================================= */
+
+async function getData() {
+
+    try {
+
+        const response =
+            await fetch(
+                `${SUPABASE_URL}/rest/v1/choices?id=eq.${encodeURIComponent(visitorId)}&select=id,number_choice,choice`,
+                {
+                    method: "GET",
+
+                    headers: {
+                        "apikey":
+                            SUPABASE_KEY,
+
+                        "Authorization":
+                            `Bearer ${SUPABASE_KEY}`
+                    }
+                }
+            );
+
+
+        if (!response.ok) {
+            return null;
+        }
+
+
+        const data =
+            await response.json();
+
+
+        return data.length
+            ? data[0]
+            : null;
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        return null;
+    }
+}
+
+
+/* =========================================
+   ПРИ ЗАПУСКУ
+   ========================================= */
+
+async function initialize() {
+
+    const data =
+        await getData();
+
+
+    /*
+       Если уже выбрано 16 —
+       дальше нельзя.
+    */
+
+    if (
+        data &&
+        data.number_choice === "16"
+    ) {
+
+        showScreen(
+            "failNumberScreen"
+        );
+
+        return;
+    }
+
+
+    /*
+       Если уже выбрано 26.
+    */
+
+    if (
+        data &&
+        data.number_choice === "26"
+    ) {
+
+        /*
+           Если финальный выбор уже сделан.
+        */
+
+        if (data.choice) {
+
+            showFinalResult(
+                data.choice
+            );
+
+        }
+
+        /*
+           Если 26 выбрано,
+           но финальный выбор еще нет.
+        */
+
+        else {
+
+            showScreen(
+                "successNumberScreen"
+            );
+
+        }
+
+        return;
+    }
+
+
+    /*
+       Если всё новое —
+       показываем чистый экран пароля.
+    */
+
+    showScreen(
+        "passwordScreen"
+    );
+}
+
+
+/* =========================================
+   ОСНОВНОЙ ПАРОЛЬ
+   ========================================= */
+
+async function checkMainPassword() {
+
+    const password =
+        document
+            .getElementById("passwordInput")
+            .value
+            .trim();
+
+
+    /*
+       Сразу правильный пароль.
+    */
+
+    if (password === "1221") {
+
+        const data =
+            await getData();
+
+
+        /*
+           Если 16 уже выбрано —
+           пароль больше не работает.
+        */
+
+        if (
+            data &&
+            data.number_choice === "16"
+        ) {
+
+            showScreen(
+                "failNumberScreen"
+            );
+
+            return;
+        }
+
+
+        /*
+           Если финальный выбор уже сделан.
+        */
+
+        if (
+            data &&
+            data.choice
+        ) {
+
+            showFinalResult(
+                data.choice
+            );
+
+            return;
+        }
+
+
+        showScreen(
+            "finalScreen"
+        );
+
+        return;
+    }
+
+
+    /*
+       Неправильный пароль.
+       Только теперь появляется
+       возможность попросить подсказку.
+    */
+
+    document
+        .getElementById("passwordInput")
+        .value = "";
+
+    document
+        .getElementById("hintButton")
+        .style.display = "inline-block";
+}
+
+
+/* =========================================
+   ПОДСКАЗКА
+   ========================================= */
+
+let hintStep = 0;
+
+
+function startHint() {
+
+    hintStep = 0;
+
+
+    document
+        .getElementById("hintText")
+        .innerText =
+        "Точно хочешь?";
+
+
+    showScreen(
+        "hintScreen"
+    );
+}
+
+
+function hintAnswer() {
+
+    hintStep++;
+
+
+    if (hintStep === 1) {
+
+        document
+            .getElementById("hintText")
+            .innerText =
+            "Точно-точно хочешь?";
+
+        return;
+    }
+
+
+    if (hintStep === 2) {
+
+        document
+            .getElementById("hintText")
+            .innerText =
+            "Ты точно-точно-точно хочешь?";
+
+        return;
+    }
+
+
+    startQuiz();
+}
+
+
+/* =========================================
+   ВОПРОСЫ
+   ========================================= */
+
+const questions = [
+
+    {
+        question:
+            "Маленькая, милая, белая собачка",
+
+        hint:
+            "Имя этой собачки: 4 символа, с большой буквы",
+
+        answer:
+            "Лилу"
+    },
+
+
+    {
+        question:
+            "Найкраща машина у світі",
+
+        hint:
+            "Номер машини: 8 символів, без пробілів, англійською, великими літерами та цифрами",
+
+        answer:
+            "AO3535EI"
+    }
+
+];
+
+
+let currentQuestion = 0;
+
+
+/* =========================================
+   НАЧАЛО ВИКТОРИНЫ
+   ========================================= */
+
+function startQuiz() {
+
+    currentQuestion = 0;
+
+    showScreen(
+        "quizScreen"
+    );
+
+    showQuestion();
+}
+
+
+/* =========================================
+   ПОКАЗ ВОПРОСА
+   ========================================= */
+
+function showQuestion() {
+
+    const q =
+        questions[currentQuestion];
+
+
+    document
+        .getElementById("question")
+        .innerText =
+        q.question;
+
+
+    document
+        .getElementById("questionHint")
+        .innerText =
+        q.hint;
+
+
+    document
+        .getElementById("answerInput")
+        .value = "";
+
+
+    document
+        .getElementById("answerInput")
+        .focus();
+}
+
+
+/* =========================================
+   ПРОВЕРКА ОТВЕТА
+   ========================================= */
+
+function checkAnswer() {
+
+    const input =
+        document
+            .getElementById("answerInput")
+            .value
+            .trim();
+
+
+    const correct =
+        input ===
+        questions[currentQuestion].answer;
+
+
+    if (!correct) {
+
+        document
+            .getElementById("answerInput")
+            .value = "";
+
+        return;
+    }
+
+
+    currentQuestion++;
+
+
+    if (
+        currentQuestion >=
+        questions.length
+    ) {
+
+        openNumberChoice();
+
+    }
+
+    else {
+
+        showQuestion();
+
+    }
+}
+
+
+/* =========================================
+   ОТКРЫВАЕМ 26 / 16
+   ========================================= */
+
+async function openNumberChoice() {
+
+    const data =
+        await getData();
+
+
+    if (
+        data &&
+        data.number_choice === "26"
+    ) {
+
+        showScreen(
+            "successNumberScreen"
+        );
+
+        return;
+    }
+
+
+    if (
+        data &&
+        data.number_choice === "16"
+    ) {
+
+        showScreen(
+            "failNumberScreen"
+        );
+
+        return;
+    }
+
+
+    showScreen(
+        "numberScreen"
+    );
+}
+
+
+/* =========================================
+   СОХРАНЕНИЕ 26 / 16
+   ========================================= */
+
+async function chooseNumber(number) {
+
+    /*
+       Проверяем, не был ли уже сделан выбор.
+    */
+
+    const existing =
+        await getData();
+
+
+    if (
+        existing &&
+        existing.number_choice
+    ) {
+
+        if (
+            existing.number_choice === "26"
+        ) {
+
+            showScreen(
+                "successNumberScreen"
+            );
+
+        }
+
+        else {
+
+            showScreen(
+                "failNumberScreen"
+            );
+
+        }
+
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                `${SUPABASE_URL}/rest/v1/choices`,
+                {
+                    method: "POST",
+
+                    headers: {
+
+                        "apikey":
+                            SUPABASE_KEY,
+
+                        "Authorization":
+                            `Bearer ${SUPABASE_KEY}`,
+
+                        "Content-Type":
+                            "application/json",
+
+                        "Prefer":
+                            "return=representation"
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            id:
+                                visitorId,
+
+                            number_choice:
+                                number
+
+                        })
+                }
+            );
+
+
+        if (!response.ok) {
+
+            const data =
+                await getData();
+
+
+            if (
+                data &&
+                data.number_choice === "26"
+            ) {
+
+                showScreen(
+                    "successNumberScreen"
+                );
+
+            }
+
+            else if (
+                data &&
+                data.number_choice === "16"
+            ) {
+
+                showScreen(
+                    "failNumberScreen"
+                );
+
+            }
+
+            return;
+        }
+
+
+        if (number === "26") {
+
+            showScreen(
+                "successNumberScreen"
+            );
+
+        }
+
+        else {
+
+            showScreen(
+                "failNumberScreen"
+            );
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+    }
+}
+
+
+/* =========================================
+   ПАРОЛЬ ПОСЛЕ 26
+   ========================================= */
+
+async function checkBirthdayPassword() {
+
+    const password =
+        document
+            .getElementById("birthdayPassword")
+            .value
+            .trim();
+
+
+    if (password !== "1221") {
+
+        document
+            .getElementById("birthdayPassword")
+            .value = "";
+
+        return;
+    }
+
+
+    const data =
+        await getData();
+
+
+    /*
+       Проверяем, что действительно
+       был выбран 26.
+    */
+
+    if (
+        data &&
+        data.number_choice === "26"
+    ) {
+
+        if (data.choice) {
+
+            showFinalResult(
+                data.choice
+            );
+
+        }
+
+        else {
+
+            showScreen(
+                "finalScreen"
+            );
+
+        }
+
+    }
+}
+
+
+/* =========================================
+   ФИНАЛЬНЫЙ ВЫБОР
+   ========================================= */
+
+async function chooseFinal(choice) {
+
+    const existing =
+        await getData();
+
+
+    /*
+       Уже выбран —
+       повторно выбрать нельзя.
+    */
+
+    if (
+        existing &&
+        existing.choice
+    ) {
+
+        showFinalResult(
+            existing.choice
+        );
+
+        return;
+    }
+
+
+    /*
+       Финальный выбор только после 26.
+    */
+
+    if (
+        !existing ||
+        existing.number_choice !== "26"
+    ) {
+
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                `${SUPABASE_URL}/rest/v1/choices?id=eq.${encodeURIComponent(visitorId)}&number_choice=eq.26&choice=is.null`,
+                {
+                    method: "PATCH",
+
+                    headers: {
+
+                        "apikey":
+                            SUPABASE_KEY,
+
+                        "Authorization":
+                            `Bearer ${SUPABASE_KEY}`,
+
+                        "Content-Type":
+                            "application/json",
+
+                        "Prefer":
+                            "return=representation"
+                    },
+
+                    body:
+                        JSON.stringify({
+                            choice:
+                                choice
+                        })
+                }
+            );
+
+
+        if (!response.ok) {
+
+            console.error(
+                "Не удалось сохранить выбор"
+            );
+
+            return;
+        }
+
+
+        const updated =
+            await getData();
+
+
+        if (
+            updated &&
+            updated.choice
+        ) {
+
+            showFinalResult(
+                updated.choice
+            );
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+    }
+}
+
+
+/* =========================================
+   ФИНАЛЬНЫЕ СООБЩЕНИЯ
+   ========================================= */
+
+function showFinalResult(choice) {
+
+    showScreen(
+        "finalScreen"
+    );
+
+
+    /*
+       Кнопки убираем.
+       Повторного выбора нет.
+    */
+
+    document
+        .getElementById("finalButtons")
+        .innerHTML = "";
+
+
+    let text = "";
+
+
+    if (choice === "Настя") {
+
+        text =
+            "Жаль, но я согласен ти классная";
+
+    }
+
+
+    else if (choice === "Ми") {
+
+        text =
+            "Я тоже так считаю, уверен ти знаєш что делать дальше ♥️";
+
+        text +=
+            "<br><br>" +
+            "А ещё очень приятно, если этот выбор ты сделала с первого раза";
+
+    }
+
+
+    else if (choice === "Льоша") {
+
+        text =
+            "Я тоже тебя люблю 😘, для меня ти тоже главный герой🤗";
+
+    }
+
+
+    document
+        .getElementById("finalResult")
+        .innerHTML =
+        text;
+}
+
+
+/* =========================================
+   ЗАПУСК
+   ========================================= */
+
+initialize();
+
+</script>
+
+</body>
+</html>
