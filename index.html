@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>...</title>
+<title>Secret</title>
 
 <style>
 * {
@@ -14,94 +14,92 @@
 body {
     margin: 0;
     min-height: 100vh;
+    background: #000;
+    color: #fff;
+    font-family: Arial, sans-serif;
 
     display: flex;
     justify-content: center;
     align-items: center;
 
-    background: #000;
-    color: #fff;
-
-    font-family: Arial, sans-serif;
     text-align: center;
 }
 
 .screen {
     width: 90%;
-    max-width: 500px;
+    max-width: 520px;
 }
 
 .hidden {
     display: none !important;
 }
 
-input {
-    width: 240px;
-    padding: 12px;
+.question {
+    font-size: 23px;
+    margin-bottom: 18px;
+    line-height: 1.4;
+}
 
-    margin-top: 18px;
+input {
+    width: 250px;
+    max-width: 90%;
+    padding: 12px;
 
     background: #000;
     color: #fff;
 
     border: 1px solid #fff;
-    outline: none;
 
     text-align: center;
-    font-size: 17px;
+    font-size: 18px;
+    outline: none;
 }
 
 button {
-    padding: 11px 24px;
+    padding: 12px 28px;
     margin: 8px 4px;
 
     background: #fff;
     color: #000;
 
     border: none;
+    border-radius: 2px;
 
-    font-size: 16px;
+    font-size: 17px;
+
     cursor: pointer;
+    pointer-events: auto;
+    touch-action: manipulation;
 }
 
 button:hover {
     opacity: 0.8;
 }
 
-.question {
-    font-size: 22px;
-    margin-bottom: 12px;
+button:disabled {
+    opacity: 0.5;
+    cursor: default;
 }
 
 .hint {
-    font-size: 14px;
-    line-height: 1.5;
-    opacity: 0.7;
-}
-
-.small {
     margin-top: 12px;
-    font-size: 14px;
-    line-height: 1.5;
+    font-size: 15px;
+    line-height: 1.6;
     opacity: 0.7;
 }
 
 .emoji {
-    font-size: 46px;
-    margin-bottom: 15px;
+    font-size: 52px;
+    margin-bottom: 18px;
 }
 
 .buttons {
     margin-top: 22px;
 }
 
-.final-button {
-    min-width: 90px;
-}
-
 .result {
     margin-top: 25px;
-    font-size: 18px;
+    font-size: 20px;
     line-height: 1.6;
 }
 
@@ -111,17 +109,17 @@ button:hover {
 </style>
 </head>
 
-
 <body>
 
-
-<!-- ========================================= -->
-<!-- ПЕРВЫЙ ЭКРАН -->
-<!-- ========================================= -->
+<!-- ============================= -->
+<!-- ПЕРШИЙ ЕКРАН -->
+<!-- ============================= -->
 
 <div id="passwordScreen" class="screen">
 
-    <div>Пароль</div>
+    <div class="question">
+        Пароль
+    </div>
 
     <input
         id="passwordInput"
@@ -131,7 +129,7 @@ button:hover {
 
     <br>
 
-    <button onclick="checkMainPassword()">
+    <button type="button" onclick="checkMainPassword()">
         →
     </button>
 
@@ -139,45 +137,41 @@ button:hover {
 
     <button
         id="hintButton"
-        onclick="startHint()">
-        Подсказка
+        type="button"
+        onclick="startHint()"
+    >
+        Підказка
     </button>
 
 </div>
 
 
-<!-- ========================================= -->
-<!-- ТРИ ПОДТВЕРЖДЕНИЯ -->
-<!-- ========================================= -->
+<!-- ============================= -->
+<!-- ПІДКАЗКА -->
+<!-- ============================= -->
 
 <div id="hintScreen" class="screen hidden">
 
-    <div id="hintText">
-        Точно хочешь?
+    <div id="hintText" class="question">
+        Точно хочеш підказку?
     </div>
 
-    <button onclick="hintAnswer()">
-        Да
+    <button type="button" onclick="hintAnswer()">
+        Так
     </button>
 
 </div>
 
 
-<!-- ========================================= -->
-<!-- ВИКТОРИНА -->
-<!-- ========================================= -->
+<!-- ============================= -->
+<!-- ВІКТОРИНА -->
+<!-- ============================= -->
 
 <div id="quizScreen" class="screen hidden">
 
-    <div
-        id="question"
-        class="question">
-    </div>
+    <div id="question" class="question"></div>
 
-    <div
-        id="questionHint"
-        class="hint">
-    </div>
+    <div id="questionHint" class="hint"></div>
 
     <input
         id="answerInput"
@@ -187,16 +181,18 @@ button:hover {
 
     <br>
 
-    <button onclick="checkAnswer()">
+    <button type="button" onclick="checkAnswer()">
         →
     </button>
+
+    <div id="answerMessage" class="hint"></div>
 
 </div>
 
 
-<!-- ========================================= -->
+<!-- ============================= -->
 <!-- 26 / 16 -->
-<!-- ========================================= -->
+<!-- ============================= -->
 
 <div id="numberScreen" class="screen hidden">
 
@@ -204,13 +200,23 @@ button:hover {
         Яке число тобі подобається?
     </div>
 
+    <div id="numberError" class="hint"></div>
+
     <div class="buttons">
 
-        <button onclick="chooseNumber('26')">
+        <button
+            id="button26"
+            type="button"
+            onclick="chooseNumber('26')"
+        >
             26
         </button>
 
-        <button onclick="chooseNumber('16')">
+        <button
+            id="button16"
+            type="button"
+            onclick="chooseNumber('16')"
+        >
             16
         </button>
 
@@ -219,9 +225,9 @@ button:hover {
 </div>
 
 
-<!-- ========================================= -->
-<!-- 26 -->
-<!-- ========================================= -->
+<!-- ============================= -->
+<!-- ПІСЛЯ 26 -->
+<!-- ============================= -->
 
 <div id="successNumberScreen" class="screen hidden">
 
@@ -229,16 +235,16 @@ button:hover {
         😊
     </div>
 
-    <div>
+    <div class="question">
         День рождения
     </div>
 
-    <div class="small">
+    <div class="hint">
         Первые два символа — месяц,<br>
         вторые два — день
     </div>
 
-    <div style="margin-top: 25px;">
+    <div style="margin-top:25px;">
 
         <div>
             Пароль
@@ -252,7 +258,7 @@ button:hover {
 
         <br>
 
-        <button onclick="checkBirthdayPassword()">
+        <button type="button" onclick="checkBirthdayPassword()">
             →
         </button>
 
@@ -261,9 +267,9 @@ button:hover {
 </div>
 
 
-<!-- ========================================= -->
-<!-- 16 -->
-<!-- ========================================= -->
+<!-- ============================= -->
+<!-- ПІСЛЯ 16 -->
+<!-- ============================= -->
 
 <div id="failNumberScreen" class="screen hidden">
 
@@ -271,55 +277,54 @@ button:hover {
         😔
     </div>
 
-    <div>
+    <div class="question">
         Жаль что так, я думаю тебе не нужна знать пароль
     </div>
 
 </div>
 
 
-<!-- ========================================= -->
-<!-- ФИНАЛЬНЫЙ ВЫБОР -->
-<!-- ========================================= -->
+<!-- ============================= -->
+<!-- ФІНАЛ -->
+<!-- ============================= -->
 
 <div id="finalScreen" class="screen hidden">
 
-    <div
-        id="finalButtons"
-        class="buttons">
+    <div class="question">
+        Хто на самом деле главний герой
+    </div>
+
+    <div id="finalButtons" class="buttons">
 
         <button
-            class="final-button"
-            onclick="chooseFinal('Настя')">
+            type="button"
+            onclick="chooseFinal('Настя')"
+        >
             Настя
         </button>
 
         <button
-            class="final-button"
-            onclick="chooseFinal('Ми')">
+            type="button"
+            onclick="chooseFinal('Ми')"
+        >
             Ми
         </button>
 
         <button
-            class="final-button"
-            onclick="chooseFinal('Льоша')">
+            type="button"
+            onclick="chooseFinal('Льоша')"
+        >
             Льоша
         </button>
 
     </div>
 
-    <div
-        id="finalResult"
-        class="result">
-    </div>
+    <div id="finalResult" class="result"></div>
 
 </div>
 
 
-
-
 <script>
-
 
 /* =========================================
    SUPABASE
@@ -333,22 +338,59 @@ const SUPABASE_KEY =
 
 
 /* =========================================
-   УНИКАЛЬНЫЙ ID ЭТОГО БРАУЗЕРА
+   ПАРОЛЬ
+   ========================================= */
+
+const MAIN_PASSWORD = "1221";
+
+
+/* =========================================
+   ПИТАННЯ
+   ========================================= */
+
+const questions = [
+
+    {
+        question: "Маленькая, милая, белая собачка",
+        answer: "Лилу",
+        hint:
+            "Подказка: це ім'я собаки. 4 символи, з великої букви."
+    },
+
+    {
+        question: "Найкраща машина у світі",
+        answer: "AO3535EI",
+        hint:
+            "Підказка: це номер машини. 8 символів, без пробілів. Відповідь англійською, великими літерами та цифрами."
+    }
+
+];
+
+
+let currentQuestion = 0;
+let hintStep = 0;
+let finalChoiceInProgress = false;
+
+
+/* =========================================
+   ID БРАУЗЕРА
    ========================================= */
 
 function getVisitorId() {
 
-    let id =
-        localStorage.getItem("visitor_id");
+    let id = localStorage.getItem("visitor_id");
 
     if (!id) {
 
-        id = crypto.randomUUID();
+        if (window.crypto && crypto.randomUUID) {
+            id = crypto.randomUUID();
+        } else {
+            id =
+                Date.now().toString() +
+                Math.random().toString(16).slice(2);
+        }
 
-        localStorage.setItem(
-            "visitor_id",
-            id
-        );
+        localStorage.setItem("visitor_id", id);
     }
 
     return id;
@@ -359,7 +401,7 @@ const visitorId = getVisitorId();
 
 
 /* =========================================
-   ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ
+   ПЕРЕМИКАННЯ ЕКРАНІВ
    ========================================= */
 
 function showScreen(id) {
@@ -367,169 +409,77 @@ function showScreen(id) {
     document
         .querySelectorAll(".screen")
         .forEach(screen => {
-
             screen.classList.add("hidden");
-
         });
 
-    document
-        .getElementById(id)
-        .classList.remove("hidden");
+    const screen = document.getElementById(id);
+
+    if (screen) {
+        screen.classList.remove("hidden");
+    }
 }
 
 
 /* =========================================
-   ПОЛУЧИТЬ ДАНІ З SUPABASE
+   ОТРИМАТИ ЗАПИС ІЗ SUPABASE
    ========================================= */
 
 async function getData() {
 
     try {
 
-        const response =
-            await fetch(
-                `${SUPABASE_URL}/rest/v1/choices?id=eq.${encodeURIComponent(visitorId)}&select=id,number_choice,choice`,
-                {
-                    method: "GET",
+        const response = await fetch(
+            SUPABASE_URL +
+            "/rest/v1/choices" +
+            "?singleton=eq.true" +
+            "&select=id,number_choice,choice,singleton" +
+            "&limit=1",
+            {
+                method: "GET",
 
-                    headers: {
-                        "apikey":
-                            SUPABASE_KEY,
-
-                        "Authorization":
-                            `Bearer ${SUPABASE_KEY}`
-                    }
+                headers: {
+                    "apikey": SUPABASE_KEY,
+                    "Authorization":
+                        "Bearer " + SUPABASE_KEY
                 }
-            );
-
+            }
+        );
 
         if (!response.ok) {
+            console.error(await response.text());
             return null;
         }
 
+        const data = await response.json();
 
-        const data =
-            await response.json();
+        return data.length ? data[0] : null;
 
-
-        return data.length
-            ? data[0]
-            : null;
-
-    }
-
-    catch (error) {
+    } catch (error) {
 
         console.error(error);
-
         return null;
     }
 }
 
 
 /* =========================================
-   ПРИ ЗАПУСКУ
-   ========================================= */
-
-async function initialize() {
-
-    const data =
-        await getData();
-
-
-    /*
-       Если уже выбрано 16 —
-       дальше нельзя.
-    */
-
-    if (
-        data &&
-        data.number_choice === "16"
-    ) {
-
-        showScreen(
-            "failNumberScreen"
-        );
-
-        return;
-    }
-
-
-    /*
-       Если уже выбрано 26.
-    */
-
-    if (
-        data &&
-        data.number_choice === "26"
-    ) {
-
-        /*
-           Если финальный выбор уже сделан.
-        */
-
-        if (data.choice) {
-
-            showFinalResult(
-                data.choice
-            );
-
-        }
-
-        /*
-           Если 26 выбрано,
-           но финальный выбор еще нет.
-        */
-
-        else {
-
-            showScreen(
-                "successNumberScreen"
-            );
-
-        }
-
-        return;
-    }
-
-
-    /*
-       Если всё новое —
-       показываем чистый экран пароля.
-    */
-
-    showScreen(
-        "passwordScreen"
-    );
-}
-
-
-/* =========================================
-   ОСНОВНОЙ ПАРОЛЬ
+   ПЕРШИЙ ПАРОЛЬ
    ========================================= */
 
 async function checkMainPassword() {
 
+    const input =
+        document.getElementById("passwordInput");
+
     const password =
-        document
-            .getElementById("passwordInput")
-            .value
-            .trim();
+        input.value.trim();
 
+    if (password === MAIN_PASSWORD) {
 
-    /*
-       Сразу правильный пароль.
-    */
-
-    if (password === "1221") {
-
-        const data =
-            await getData();
-
+        const data = await getData();
 
         /*
-           Если 16 уже выбрано —
-           пароль больше не работает.
+           Якщо вже вибрано 16
         */
 
         if (
@@ -537,48 +487,41 @@ async function checkMainPassword() {
             data.number_choice === "16"
         ) {
 
-            showScreen(
-                "failNumberScreen"
-            );
-
+            showScreen("failNumberScreen");
             return;
         }
 
 
         /*
-           Если финальный выбор уже сделан.
+           Якщо фінальний вибір уже зроблено
         */
 
         if (
             data &&
-            data.choice
+            data.choice &&
+            data.choice.trim() !== ""
         ) {
 
-            showFinalResult(
-                data.choice
-            );
-
+            showFinalResult(data.choice);
             return;
         }
 
 
-        showScreen(
-            "finalScreen"
-        );
+        /*
+           Правильний пароль —
+           одразу фінальний екран
+        */
 
+        showScreen("finalScreen");
         return;
     }
 
 
     /*
-       Неправильный пароль.
-       Только теперь появляется
-       возможность попросить подсказку.
+       Неправильний пароль
     */
 
-    document
-        .getElementById("passwordInput")
-        .value = "";
+    input.value = "";
 
     document
         .getElementById("hintButton")
@@ -587,26 +530,19 @@ async function checkMainPassword() {
 
 
 /* =========================================
-   ПОДСКАЗКА
+   ПІДКАЗКА
    ========================================= */
-
-let hintStep = 0;
-
 
 function startHint() {
 
     hintStep = 0;
 
-
     document
         .getElementById("hintText")
         .innerText =
-        "Точно хочешь?";
+        "Точно хочеш підказку?";
 
-
-    showScreen(
-        "hintScreen"
-    );
+    showScreen("hintScreen");
 }
 
 
@@ -614,110 +550,63 @@ function hintAnswer() {
 
     hintStep++;
 
+    const text =
+        document.getElementById("hintText");
 
     if (hintStep === 1) {
 
-        document
-            .getElementById("hintText")
-            .innerText =
-            "Точно-точно хочешь?";
+        text.innerText =
+            "Точно-точно?";
 
         return;
     }
-
 
     if (hintStep === 2) {
 
-        document
-            .getElementById("hintText")
-            .innerText =
-            "Ты точно-точно-точно хочешь?";
+        text.innerText =
+            "Ну добре...";
 
         return;
     }
 
-
-    startQuiz();
-}
-
-
-/* =========================================
-   ВОПРОСЫ
-   ========================================= */
-
-const questions = [
-
-    {
-        question:
-            "Маленькая, милая, белая собачка",
-
-        hint:
-            "Имя этой собачки: 4 символа, с большой буквы",
-
-        answer:
-            "Лилу"
-    },
-
-
-    {
-        question:
-            "Найкраща машина у світі",
-
-        hint:
-            "Номер машини: 8 символів, без пробілів, англійською, великими літерами та цифрами",
-
-        answer:
-            "AO3535EI"
-    }
-
-];
-
-
-let currentQuestion = 0;
-
-
-/* =========================================
-   НАЧАЛО ВИКТОРИНЫ
-   ========================================= */
-
-function startQuiz() {
+    /*
+       Після трьох підтверджень —
+       починаємо вікторину
+    */
 
     currentQuestion = 0;
 
-    showScreen(
-        "quizScreen"
-    );
-
     showQuestion();
+
+    showScreen("quizScreen");
 }
 
 
 /* =========================================
-   ПОКАЗ ВОПРОСА
+   ПОКАЗАТИ ПИТАННЯ
    ========================================= */
 
 function showQuestion() {
 
-    const q =
-        questions[currentQuestion];
-
+    const q = questions[currentQuestion];
 
     document
         .getElementById("question")
         .innerText =
         q.question;
 
-
     document
         .getElementById("questionHint")
         .innerText =
         q.hint;
 
+    document
+        .getElementById("answerMessage")
+        .innerText = "";
 
     document
         .getElementById("answerInput")
         .value = "";
-
 
     document
         .getElementById("answerInput")
@@ -726,7 +615,7 @@ function showQuestion() {
 
 
 /* =========================================
-   ПРОВЕРКА ОТВЕТА
+   ПЕРЕВІРКА ВІДПОВІДІВ
    ========================================= */
 
 function checkAnswer() {
@@ -737,97 +626,73 @@ function checkAnswer() {
             .value
             .trim();
 
-
     const correct =
-        input ===
         questions[currentQuestion].answer;
 
-
-    if (!correct) {
-
-        document
-            .getElementById("answerInput")
-            .value = "";
-
-        return;
-    }
-
-
-    currentQuestion++;
-
+    /*
+       Для другого питання —
+       без урахування регістру.
+    */
 
     if (
-        currentQuestion >=
-        questions.length
+        input.toUpperCase() ===
+        correct.toUpperCase()
     ) {
 
-        openNumberChoice();
+        currentQuestion++;
 
-    }
+        if (
+            currentQuestion >=
+            questions.length
+        ) {
 
-    else {
+            showScreen("numberScreen");
+            return;
+        }
 
         showQuestion();
-
-    }
-}
-
-
-/* =========================================
-   ОТКРЫВАЕМ 26 / 16
-   ========================================= */
-
-async function openNumberChoice() {
-
-    const data =
-        await getData();
-
-
-    if (
-        data &&
-        data.number_choice === "26"
-    ) {
-
-        showScreen(
-            "successNumberScreen"
-        );
-
         return;
     }
 
 
-    if (
-        data &&
-        data.number_choice === "16"
-    ) {
+    /*
+       Неправильна відповідь
+    */
 
-        showScreen(
-            "failNumberScreen"
-        );
-
-        return;
-    }
-
-
-    showScreen(
-        "numberScreen"
-    );
+    document
+        .getElementById("answerMessage")
+        .innerText =
+        "Не зовсім 🙂 Спробуй ще раз.";
 }
 
 
 /* =========================================
-   СОХРАНЕНИЕ 26 / 16
+   ВИБІР 26 / 16
    ========================================= */
 
 async function chooseNumber(number) {
 
+    const button26 =
+        document.getElementById("button26");
+
+    const button16 =
+        document.getElementById("button16");
+
+    button26.disabled = true;
+    button16.disabled = true;
+
+    const errorBox =
+        document.getElementById("numberError");
+
+    errorBox.innerText = "";
+
+
     /*
-       Проверяем, не был ли уже сделан выбор.
+       Перевіряємо,
+       чи вже є глобальний вибір
     */
 
-    const existing =
-        await getData();
-
+    const existing = await getData();
 
     if (
         existing &&
@@ -842,14 +707,11 @@ async function chooseNumber(number) {
                 "successNumberScreen"
             );
 
-        }
-
-        else {
+        } else {
 
             showScreen(
                 "failNumberScreen"
             );
-
         }
 
         return;
@@ -858,174 +720,198 @@ async function chooseNumber(number) {
 
     try {
 
-        const response =
-            await fetch(
-                `${SUPABASE_URL}/rest/v1/choices`,
-                {
-                    method: "POST",
+        /*
+           ВАЖЛИВО:
+           choice = "" замість null.
 
-                    headers: {
+           У твоїй базі choice має NOT NULL,
+           тому null дав помилку 23502.
+        */
 
-                        "apikey":
-                            SUPABASE_KEY,
+        const response = await fetch(
+            SUPABASE_URL +
+            "/rest/v1/choices",
+            {
+                method: "POST",
 
-                        "Authorization":
-                            `Bearer ${SUPABASE_KEY}`,
+                headers: {
+                    "apikey": SUPABASE_KEY,
 
-                        "Content-Type":
-                            "application/json",
+                    "Authorization":
+                        "Bearer " + SUPABASE_KEY,
 
-                        "Prefer":
-                            "return=representation"
-                    },
+                    "Content-Type":
+                        "application/json",
 
-                    body:
-                        JSON.stringify({
+                    "Prefer":
+                        "return=representation"
+                },
 
-                            id:
-                                visitorId,
+                body: JSON.stringify({
 
-                            number_choice:
-                                number
+                    id: visitorId,
 
-                        })
-                }
-            );
+                    number_choice:
+                        String(number),
+
+                    choice: "",
+
+                    singleton: true
+                })
+            }
+        );
 
 
         if (!response.ok) {
 
-            const data =
+            const existingAfterError =
                 await getData();
 
-
             if (
-                data &&
-                data.number_choice === "26"
+                existingAfterError &&
+                existingAfterError.number_choice
             ) {
 
-                showScreen(
-                    "successNumberScreen"
-                );
+                if (
+                    existingAfterError.number_choice ===
+                    "26"
+                ) {
 
+                    showScreen(
+                        "successNumberScreen"
+                    );
+
+                } else {
+
+                    showScreen(
+                        "failNumberScreen"
+                    );
+                }
+
+                return;
             }
 
-            else if (
-                data &&
-                data.number_choice === "16"
-            ) {
 
-                showScreen(
-                    "failNumberScreen"
-                );
+            console.error(
+                "Supabase error:",
+                await response.text()
+            );
 
-            }
+            errorBox.innerText =
+                "Не вдалося зберегти вибір.";
+
+            button26.disabled = false;
+            button16.disabled = false;
 
             return;
         }
 
 
-        if (number === "26") {
+        /*
+           Все добре
+        */
+
+        if (String(number) === "26") {
 
             showScreen(
                 "successNumberScreen"
             );
 
-        }
-
-        else {
+        } else {
 
             showScreen(
                 "failNumberScreen"
             );
-
         }
 
-    }
 
-    catch (error) {
+    } catch (error) {
 
         console.error(error);
 
+        errorBox.innerText =
+            "Помилка підключення до бази.";
+
+        button26.disabled = false;
+        button16.disabled = false;
     }
 }
 
 
 /* =========================================
-   ПАРОЛЬ ПОСЛЕ 26
+   ПАРОЛЬ ПІСЛЯ 26
    ========================================= */
 
 async function checkBirthdayPassword() {
 
+    const input =
+        document
+            .getElementById("birthdayPassword");
+
     const password =
-        document
-            .getElementById("birthdayPassword")
-            .value
-            .trim();
+        input.value.trim();
 
 
-    if (password !== "1221") {
+    if (password !== MAIN_PASSWORD) {
 
-        document
-            .getElementById("birthdayPassword")
-            .value = "";
+        input.value = "";
 
         return;
     }
 
 
-    const data =
-        await getData();
+    const data = await getData();
 
-
-    /*
-       Проверяем, что действительно
-       был выбран 26.
-    */
 
     if (
         data &&
         data.number_choice === "26"
     ) {
 
-        if (data.choice) {
+        if (
+            data.choice &&
+            data.choice.trim() !== ""
+        ) {
 
-            showFinalResult(
-                data.choice
-            );
+            showFinalResult(data.choice);
 
+        } else {
+
+            showScreen("finalScreen");
         }
-
-        else {
-
-            showScreen(
-                "finalScreen"
-            );
-
-        }
-
     }
 }
 
 
 /* =========================================
-   ФИНАЛЬНЫЙ ВЫБОР
+   ФІНАЛЬНИЙ ВИБІР
    ========================================= */
 
 async function chooseFinal(choice) {
 
-    const existing =
-        await getData();
+    if (finalChoiceInProgress) {
+        return;
+    }
+
+    finalChoiceInProgress = true;
 
 
     /*
-       Уже выбран —
-       повторно выбрать нельзя.
+       Перевіряємо базу
+    */
+
+    const existing = await getData();
+
+
+    /*
+       Якщо вибір уже був —
+       просто показуємо його
     */
 
     if (
         existing &&
-        existing.choice
+        existing.choice &&
+        existing.choice.trim() !== ""
     ) {
 
         showFinalResult(
@@ -1037,7 +923,8 @@ async function chooseFinal(choice) {
 
 
     /*
-       Финальный выбор только после 26.
+       Фінальний вибір дозволений
+       тільки після 26
     */
 
     if (
@@ -1045,54 +932,59 @@ async function chooseFinal(choice) {
         existing.number_choice !== "26"
     ) {
 
+        finalChoiceInProgress = false;
         return;
     }
 
 
     try {
 
-        const response =
-            await fetch(
-                `${SUPABASE_URL}/rest/v1/choices?id=eq.${encodeURIComponent(visitorId)}&number_choice=eq.26&choice=is.null`,
-                {
-                    method: "PATCH",
+        /*
+           Оновлюємо єдиний запис.
+        */
 
-                    headers: {
+        const response = await fetch(
+            SUPABASE_URL +
+            "/rest/v1/choices" +
+            "?singleton=eq.true",
+            {
+                method: "PATCH",
 
-                        "apikey":
-                            SUPABASE_KEY,
+                headers: {
 
-                        "Authorization":
-                            `Bearer ${SUPABASE_KEY}`,
+                    "apikey": SUPABASE_KEY,
 
-                        "Content-Type":
-                            "application/json",
+                    "Authorization":
+                        "Bearer " + SUPABASE_KEY,
 
-                        "Prefer":
-                            "return=representation"
-                    },
+                    "Content-Type":
+                        "application/json",
 
-                    body:
-                        JSON.stringify({
-                            choice:
-                                choice
-                        })
-                }
-            );
+                    "Prefer":
+                        "return=representation"
+                },
+
+                body: JSON.stringify({
+                    choice: choice
+                })
+            }
+        );
 
 
         if (!response.ok) {
 
             console.error(
-                "Не удалось сохранить выбор"
+                "Supabase update error:",
+                await response.text()
             );
+
+            finalChoiceInProgress = false;
 
             return;
         }
 
 
-        const updated =
-            await getData();
+        const updated = await getData();
 
 
         if (
@@ -1103,82 +995,101 @@ async function chooseFinal(choice) {
             showFinalResult(
                 updated.choice
             );
+
+        } else {
+
+            finalChoiceInProgress = false;
         }
 
-    }
 
-    catch (error) {
+    } catch (error) {
 
         console.error(error);
 
+        finalChoiceInProgress = false;
     }
 }
 
 
 /* =========================================
-   ФИНАЛЬНЫЕ СООБЩЕНИЯ
+   ФІНАЛЬНА ВІДПОВІДЬ
    ========================================= */
 
 function showFinalResult(choice) {
 
-    showScreen(
-        "finalScreen"
-    );
-
-
-    /*
-       Кнопки убираем.
-       Повторного выбора нет.
-    */
+    showScreen("finalScreen");
 
     document
         .getElementById("finalButtons")
-        .innerHTML = "";
-
-
-    let text = "";
-
-
-    if (choice === "Настя") {
-
-        text =
-            "Жаль, но я согласен ти классная";
-
-    }
-
-
-    else if (choice === "Ми") {
-
-        text =
-            "Я тоже так считаю, уверен ти знаєш что делать дальше ♥️";
-
-        text +=
-            "<br><br>" +
-            "А ещё очень приятно, если этот выбор ты сделала с первого раза";
-
-    }
-
-
-    else if (choice === "Льоша") {
-
-        text =
-            "Я тоже тебя люблю 😘, для меня ти тоже главный герой🤗";
-
-    }
-
+        .classList.add("hidden");
 
     document
         .getElementById("finalResult")
-        .innerHTML =
-        text;
+        .innerText =
+        "Ти обрала: " + choice + " ❤️";
 }
 
 
 /* =========================================
-   ЗАПУСК
+   ENTER НА КЛАВІАТУРІ
    ========================================= */
 
-initialize();
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (event.key !== "Enter") {
+            return;
+        }
+
+        const passwordScreen =
+            document.getElementById(
+                "passwordScreen"
+            );
+
+        const quizScreen =
+            document.getElementById(
+                "quizScreen"
+            );
+
+        const birthdayScreen =
+            document.getElementById(
+                "successNumberScreen"
+            );
+
+
+        if (
+            !passwordScreen.classList.contains(
+                "hidden"
+            )
+        ) {
+
+            checkMainPassword();
+            return;
+        }
+
+
+        if (
+            !quizScreen.classList.contains(
+                "hidden"
+            )
+        ) {
+
+            checkAnswer();
+            return;
+        }
+
+
+        if (
+            !birthdayScreen.classList.contains(
+                "hidden"
+            )
+        ) {
+
+            checkBirthdayPassword();
+        }
+    }
+);
 
 </script>
 
