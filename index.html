@@ -325,6 +325,8 @@ button:disabled {
 
     <div id="finalError" class="hint"></div>
 
+    <div id="finalEmoji" class="emoji hidden"></div>
+
     <div id="finalResult" class="result"></div>
 
 </div>
@@ -392,6 +394,23 @@ const finalMessages = {
 
     "Льоша":
         "Я тоже тебя люблю 😘, для меня ти тоже главный герой🤗"
+
+};
+
+
+/* =========================================
+   ЕМОДЗІ ДЛЯ ФІНАЛЬНОГО ВІКНА
+
+   Показується великим окремим блоком
+   над текстом, як на екранах 26/16.
+   Якщо для якогось вибору емодзі не
+   вказано — блок просто лишається
+   прихованим.
+   ========================================= */
+
+const finalEmojis = {
+
+    "Настя": "😔"
 
 };
 
@@ -499,11 +518,16 @@ async function getData() {
 /* =========================================
    ПЕРШИЙ ПАРОЛЬ
 
-   Прямий вхід по паролю НЕ залежить від
-   того, чи проходили вікторину і чи обрано
-   26/16. Єдина перевірка — чи вже зроблено
-   фінальний вибір (щоб одразу показати
-   збережений результат при повторному вході).
+   Правильний пароль веде до фіналу ЗАВЖДИ,
+   незалежно від 26/16 — це єдиний шлях,
+   який лишається доступним після того, як
+   уже обрано 16.
+
+   Якщо пароль неправильний І в базі вже
+   назавжди зафіксовано вибір "16" —
+   шлях через підказки/вікторину більше
+   недоступний: одразу показуємо сумний
+   екран замість кнопки "Підказка".
    ========================================= */
 
 async function checkMainPassword() {
@@ -538,6 +562,25 @@ async function checkMainPassword() {
     */
 
     input.value = "";
+
+
+    /*
+       Якщо 16 вже обрано назавжди —
+       підказки більше не показуємо,
+       одразу сумний екран.
+    */
+
+    const data = await getData();
+
+    if (
+        data &&
+        data.number_choice === "16"
+    ) {
+
+        showScreen("failNumberScreen");
+        return;
+    }
+
 
     document
         .getElementById("hintButton")
@@ -708,47 +751,28 @@ async function chooseNumber(number) {
 
 
     /*
-       Перевіряємо,
-       чи вже є глобальний вибір
+       ВАЖЛИВО: тут більше НЕ перевіряємо,
+       яке значення вже збережене в базі,
+       і не показуємо його замість реального
+       кліку. Кожне натискання 26/16 завжди
+       показує саме той екран, який щойно
+       натиснули, і завжди перезаписує
+       number_choice в базі (тільки це поле —
+       choice, якщо він уже збережений раніше,
+       не чіпаємо).
     */
 
-    const existing = await getData();
-
-    if (
-        existing &&
-        existing.number_choice
-    ) {
-
-        if (
-            existing.number_choice === "26"
-        ) {
-
-            showScreen(
-                "successNumberScreen"
-            );
-
-        } else {
-
-            showScreen(
-                "failNumberScreen"
-            );
-        }
-
-        return;
-    }
-
-
     try {
+
+        const existing = await getData();
 
         let response;
 
         if (existing) {
 
             /*
-               Запис уже є (наприклад,
-               створений прямим входом
-               по паролю), просто оновлюємо
-               number_choice у ньому.
+               Запис уже є — оновлюємо
+               тільки number_choice.
             */
 
             response = await fetch(
@@ -781,6 +805,9 @@ async function chooseNumber(number) {
         } else {
 
             /*
+               Запису ще немає взагалі —
+               створюємо новий.
+
                ВАЖЛИВО:
                choice = "" замість null,
                бо колонка choice NOT NULL.
@@ -823,34 +850,6 @@ async function chooseNumber(number) {
 
         if (!response.ok) {
 
-            const existingAfterError =
-                await getData();
-
-            if (
-                existingAfterError &&
-                existingAfterError.number_choice
-            ) {
-
-                if (
-                    existingAfterError.number_choice ===
-                    "26"
-                ) {
-
-                    showScreen(
-                        "successNumberScreen"
-                    );
-
-                } else {
-
-                    showScreen(
-                        "failNumberScreen"
-                    );
-                }
-
-                return;
-            }
-
-
             console.error(
                 "Supabase error:",
                 await response.text()
@@ -867,7 +866,9 @@ async function chooseNumber(number) {
 
 
         /*
-           Все добре
+           Показуємо екран саме за тим
+           числом, яке щойно натиснули —
+           а не за тим, що було в базі.
         */
 
         if (String(number) === "26") {
@@ -895,6 +896,7 @@ async function chooseNumber(number) {
         button16.disabled = false;
     }
 }
+
 
 
 /* =========================================
@@ -1167,6 +1169,23 @@ function showFinalResult(choice) {
     document
         .getElementById("finalButtons")
         .classList.add("hidden");
+
+    const emojiBox =
+        document.getElementById("finalEmoji");
+
+    const emoji =
+        finalEmojis[choice];
+
+    if (emoji) {
+
+        emojiBox.innerText = emoji;
+        emojiBox.classList.remove("hidden");
+
+    } else {
+
+        emojiBox.innerText = "";
+        emojiBox.classList.add("hidden");
+    }
 
     const message =
         finalMessages[choice] ||
