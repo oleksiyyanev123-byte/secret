@@ -101,6 +101,7 @@ button:disabled {
     margin-top: 25px;
     font-size: 20px;
     line-height: 1.6;
+    white-space: pre-line;
 }
 
 #hintButton {
@@ -153,7 +154,7 @@ button:disabled {
 <div id="hintScreen" class="screen hidden">
 
     <div id="hintText" class="question">
-        Точно хочеш підказку?
+        Точно хочеш?
     </div>
 
     <button type="button" onclick="hintAnswer()">
@@ -290,13 +291,14 @@ button:disabled {
 
 <div id="finalScreen" class="screen hidden">
 
-    <div class="question">
+    <div id="finalQuestion" class="question">
         Хто на самом деле главний герой
     </div>
 
     <div id="finalButtons" class="buttons">
 
         <button
+            id="finalButtonNastya"
             type="button"
             onclick="chooseFinal('Настя')"
         >
@@ -304,6 +306,7 @@ button:disabled {
         </button>
 
         <button
+            id="finalButtonMi"
             type="button"
             onclick="chooseFinal('Ми')"
         >
@@ -311,6 +314,7 @@ button:disabled {
         </button>
 
         <button
+            id="finalButtonLosha"
             type="button"
             onclick="chooseFinal('Льоша')"
         >
@@ -318,6 +322,8 @@ button:disabled {
         </button>
 
     </div>
+
+    <div id="finalError" class="hint"></div>
 
     <div id="finalResult" class="result"></div>
 
@@ -365,6 +371,29 @@ const questions = [
     }
 
 ];
+
+
+/* =========================================
+   ТЕКСТИ ФІНАЛЬНИХ ВІДПОВІДЕЙ
+
+   Ключі мають ТОЧНО збігатись зі значенням,
+   яке передається у chooseFinal(...) з кнопок
+   і яке зберігається у Supabase в колонці choice.
+   ========================================= */
+
+const finalMessages = {
+
+    "Настя":
+        "Жаль, но я согласен ти классная",
+
+    "Ми":
+        "Я тоже так считаю, уверен ти знаєш что делать дальше ♥️\n\n" +
+        "А ещё очень приятно, если этот выбор ты сделала с первого раза",
+
+    "Льоша":
+        "Я тоже тебя люблю 😘, для меня ти тоже главный герой🤗"
+
+};
 
 
 let currentQuestion = 0;
@@ -422,6 +451,11 @@ function showScreen(id) {
 
 /* =========================================
    ОТРИМАТИ ЗАПИС ІЗ SUPABASE
+
+   У проєкті один спільний ("singleton")
+   запис на весь сайт — не по одному
+   на кожного відвідувача. Тому завжди
+   шукаємо перший рядок з singleton = true.
    ========================================= */
 
 async function getData() {
@@ -464,6 +498,12 @@ async function getData() {
 
 /* =========================================
    ПЕРШИЙ ПАРОЛЬ
+
+   Прямий вхід по паролю НЕ залежить від
+   того, чи проходили вікторину і чи обрано
+   26/16. Єдина перевірка — чи вже зроблено
+   фінальний вибір (щоб одразу показати
+   збережений результат при повторному вході).
    ========================================= */
 
 async function checkMainPassword() {
@@ -478,24 +518,6 @@ async function checkMainPassword() {
 
         const data = await getData();
 
-        /*
-           Якщо вже вибрано 16
-        */
-
-        if (
-            data &&
-            data.number_choice === "16"
-        ) {
-
-            showScreen("failNumberScreen");
-            return;
-        }
-
-
-        /*
-           Якщо фінальний вибір уже зроблено
-        */
-
         if (
             data &&
             data.choice &&
@@ -505,12 +527,6 @@ async function checkMainPassword() {
             showFinalResult(data.choice);
             return;
         }
-
-
-        /*
-           Правильний пароль —
-           одразу фінальний екран
-        */
 
         showScreen("finalScreen");
         return;
@@ -540,7 +556,7 @@ function startHint() {
     document
         .getElementById("hintText")
         .innerText =
-        "Точно хочеш підказку?";
+        "Точно хочеш?";
 
     showScreen("hintScreen");
 }
@@ -616,6 +632,10 @@ function showQuestion() {
 
 /* =========================================
    ПЕРЕВІРКА ВІДПОВІДІВ
+
+   Обидва питання звіряються без урахування
+   регістру — щоб "лилу"/"ЛИЛУ"/"Лилу" та
+   "ao3535ei"/"AO3535EI" однаково зараховувались.
    ========================================= */
 
 function checkAnswer() {
@@ -628,11 +648,6 @@ function checkAnswer() {
 
     const correct =
         questions[currentQuestion].answer;
-
-    /*
-       Для другого питання —
-       без урахування регістру.
-    */
 
     if (
         input.toUpperCase() ===
@@ -668,6 +683,11 @@ function checkAnswer() {
 
 /* =========================================
    ВИБІР 26 / 16
+
+   Незалежно створює або оновлює той самий
+   глобальний singleton-запис, навіть якщо
+   він уже існує (наприклад, створений через
+   прямий вхід по паролю раніше).
    ========================================= */
 
 async function chooseNumber(number) {
@@ -720,46 +740,85 @@ async function chooseNumber(number) {
 
     try {
 
-        /*
-           ВАЖЛИВО:
-           choice = "" замість null.
+        let response;
 
-           У твоїй базі choice має NOT NULL,
-           тому null дав помилку 23502.
-        */
+        if (existing) {
 
-        const response = await fetch(
-            SUPABASE_URL +
-            "/rest/v1/choices",
-            {
-                method: "POST",
+            /*
+               Запис уже є (наприклад,
+               створений прямим входом
+               по паролю), просто оновлюємо
+               number_choice у ньому.
+            */
 
-                headers: {
-                    "apikey": SUPABASE_KEY,
+            response = await fetch(
+                SUPABASE_URL +
+                "/rest/v1/choices" +
+                "?singleton=eq.true",
+                {
+                    method: "PATCH",
 
-                    "Authorization":
-                        "Bearer " + SUPABASE_KEY,
+                    headers: {
+                        "apikey": SUPABASE_KEY,
 
-                    "Content-Type":
-                        "application/json",
+                        "Authorization":
+                            "Bearer " + SUPABASE_KEY,
 
-                    "Prefer":
-                        "return=representation"
-                },
+                        "Content-Type":
+                            "application/json",
 
-                body: JSON.stringify({
+                        "Prefer":
+                            "return=representation"
+                    },
 
-                    id: visitorId,
+                    body: JSON.stringify({
+                        number_choice:
+                            String(number)
+                    })
+                }
+            );
 
-                    number_choice:
-                        String(number),
+        } else {
 
-                    choice: "",
+            /*
+               ВАЖЛИВО:
+               choice = "" замість null,
+               бо колонка choice NOT NULL.
+            */
 
-                    singleton: true
-                })
-            }
-        );
+            response = await fetch(
+                SUPABASE_URL +
+                "/rest/v1/choices",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "apikey": SUPABASE_KEY,
+
+                        "Authorization":
+                            "Bearer " + SUPABASE_KEY,
+
+                        "Content-Type":
+                            "application/json",
+
+                        "Prefer":
+                            "return=representation"
+                    },
+
+                    body: JSON.stringify({
+
+                        id: visitorId,
+
+                        number_choice:
+                            String(number),
+
+                        choice: "",
+
+                        singleton: true
+                    })
+                }
+            );
+        }
 
 
         if (!response.ok) {
@@ -840,6 +899,11 @@ async function chooseNumber(number) {
 
 /* =========================================
    ПАРОЛЬ ПІСЛЯ 26
+
+   Специфічний саме для шляху "26" —
+   ця перевірка number_choice === "26"
+   логічна, бо екран показується лише
+   після натискання кнопки 26.
    ========================================= */
 
 async function checkBirthdayPassword() {
@@ -885,7 +949,28 @@ async function checkBirthdayPassword() {
 
 /* =========================================
    ФІНАЛЬНИЙ ВИБІР
+
+   Не залежить від 26/16. Якщо запису
+   в базі ще немає — створює його одразу
+   з вибором (POST). Якщо є — оновлює
+   (PATCH). Повторний вибір іншої кнопки
+   після збереження неможливий (спершу
+   завжди перевіряється існуючий choice).
    ========================================= */
+
+function setFinalButtonsDisabled(disabled) {
+
+    ["finalButtonNastya", "finalButtonMi", "finalButtonLosha"]
+        .forEach(function(id) {
+
+            const btn = document.getElementById(id);
+
+            if (btn) {
+                btn.disabled = disabled;
+            }
+        });
+}
+
 
 async function chooseFinal(choice) {
 
@@ -894,6 +979,13 @@ async function chooseFinal(choice) {
     }
 
     finalChoiceInProgress = true;
+
+    const errorBox =
+        document.getElementById("finalError");
+
+    errorBox.innerText = "";
+
+    setFinalButtonsDisabled(true);
 
 
     /*
@@ -906,6 +998,7 @@ async function chooseFinal(choice) {
     /*
        Якщо вибір уже був —
        просто показуємо його
+       (повторний вибір неможливий)
     */
 
     if (
@@ -922,63 +1015,103 @@ async function chooseFinal(choice) {
     }
 
 
-    /*
-       Фінальний вибір дозволений
-       тільки після 26
-    */
-
-    if (
-        !existing ||
-        existing.number_choice !== "26"
-    ) {
-
-        finalChoiceInProgress = false;
-        return;
-    }
-
-
     try {
 
-        /*
-           Оновлюємо єдиний запис.
-        */
+        let response;
 
-        const response = await fetch(
-            SUPABASE_URL +
-            "/rest/v1/choices" +
-            "?singleton=eq.true",
-            {
-                method: "PATCH",
+        if (!existing) {
 
-                headers: {
+            /*
+               Запису в базі ще немає взагалі
+               (прямий вхід по паролю без
+               проходження 26/16) —
+               створюємо його одразу з вибором.
+            */
 
-                    "apikey": SUPABASE_KEY,
+            response = await fetch(
+                SUPABASE_URL +
+                "/rest/v1/choices",
+                {
+                    method: "POST",
 
-                    "Authorization":
-                        "Bearer " + SUPABASE_KEY,
+                    headers: {
+                        "apikey": SUPABASE_KEY,
 
-                    "Content-Type":
-                        "application/json",
+                        "Authorization":
+                            "Bearer " + SUPABASE_KEY,
 
-                    "Prefer":
-                        "return=representation"
-                },
+                        "Content-Type":
+                            "application/json",
 
-                body: JSON.stringify({
-                    choice: choice
-                })
-            }
-        );
+                        "Prefer":
+                            "return=representation"
+                    },
+
+                    body: JSON.stringify({
+
+                        id: visitorId,
+
+                        number_choice: "",
+
+                        choice: choice,
+
+                        singleton: true
+                    })
+                }
+            );
+
+        } else {
+
+            /*
+               Запис уже є (наприклад,
+               зі шляху 26/16) —
+               оновлюємо поле choice.
+            */
+
+            response = await fetch(
+                SUPABASE_URL +
+                "/rest/v1/choices" +
+                "?singleton=eq.true",
+                {
+                    method: "PATCH",
+
+                    headers: {
+
+                        "apikey": SUPABASE_KEY,
+
+                        "Authorization":
+                            "Bearer " + SUPABASE_KEY,
+
+                        "Content-Type":
+                            "application/json",
+
+                        "Prefer":
+                            "return=representation"
+                    },
+
+                    body: JSON.stringify({
+                        choice: choice
+                    })
+                }
+            );
+        }
 
 
         if (!response.ok) {
 
+            const errorText = await response.text();
+
             console.error(
                 "Supabase update error:",
-                await response.text()
+                errorText
             );
 
+            errorBox.innerText =
+                "Не вдалося зберегти вибір. " +
+                "Деталі: " + errorText;
+
             finalChoiceInProgress = false;
+            setFinalButtonsDisabled(false);
 
             return;
         }
@@ -999,6 +1132,7 @@ async function chooseFinal(choice) {
         } else {
 
             finalChoiceInProgress = false;
+            setFinalButtonsDisabled(false);
         }
 
 
@@ -1006,13 +1140,20 @@ async function chooseFinal(choice) {
 
         console.error(error);
 
+        errorBox.innerText =
+            "Помилка підключення до бази.";
+
         finalChoiceInProgress = false;
+        setFinalButtonsDisabled(false);
     }
 }
 
 
 /* =========================================
    ФІНАЛЬНА ВІДПОВІДЬ
+
+   Показує окремий текст під кожну кнопку,
+   а не узагальнене "Ти обрала: X".
    ========================================= */
 
 function showFinalResult(choice) {
@@ -1020,13 +1161,21 @@ function showFinalResult(choice) {
     showScreen("finalScreen");
 
     document
+        .getElementById("finalQuestion")
+        .classList.add("hidden");
+
+    document
         .getElementById("finalButtons")
         .classList.add("hidden");
+
+    const message =
+        finalMessages[choice] ||
+        ("Ти обрала: " + choice);
 
     document
         .getElementById("finalResult")
         .innerText =
-        "Ти обрала: " + choice + " ❤️";
+        message;
 }
 
 
